@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+#app{
+    height: 100vh;
+}
+.conversation-item .avatar-online:before{
+    width:8px;
+    height:8px;
+    top:1%;
+    right:1%;
+    outline-width: 1px;
+}
+/* make sure the bubble is the positioning context */
+.chat-bubble {
+  position: relative;
+  overflow: visible; /* allow the tail to show outside the box */
+}
+
+/* reset/override DaisyUI's default offsets (safer than forcing bottom globally) */
+.chat-bubble::before,
+.chat-bubble::after {
+  content: "" !important;
+  position: absolute !important;
+  bottom: 8px !important;   /* anchor to bottom (tweak as needed) */
+  top: auto !important;
+  transform: none !important;
+  width: 12px !important;
+  height: 16px !important;
+  z-index: 1 !important;
+  background: inherit !important; /* match bubble color */
+  pointer-events: none;
+}
+
+/* subtle shadow behind the tail (use ::before for shadow, ::after for color) */
+.chat-bubble::before {
+  z-index: 0 !important;
+  width: 14px !important;
+  height: 18px !important;
+  background: rgba(0,0,0,0.06) !important; /* tweak opacity for your theme */
+  filter: blur(0.5px);
+}
+
+/* LEFT-side tail (chat-start) */
+.chat-start .chat-bubble::after {
+  left: -8px !important; /* controls horizontal gap from bubble */
+  clip-path: polygon(0 50%, 100% 0, 100% 100%); /* triangle pointing left */
+  z-index: 2 !important;
+}
+.chat-start .chat-bubble::before {
+  left: -9px !important;
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+}
+
+/* RIGHT-side tail (chat-end) */
+.chat-end .chat-bubble::after {
+  right: -8px !important;
+  clip-path: polygon(100% 50%, 0 0, 0 100%); /* triangle pointing right */
+  z-index: 2 !important;
+}
+.chat-end .chat-bubble::before {
+  right: -9px !important;
+  clip-path: polygon(100% 50%, 0 0, 0 100%);
+}
+.scrollable_div {
+  /* Disable momentum scrolling on WebKit browsers */
+  -webkit-overflow-scrolling: auto;
+  
+  /* Ensure smooth scrolling behavior */
+  scroll-behavior: smooth;
+  
+  /* Force hardware acceleration */
+  transform: translateZ(0);
+  
+  /* Ensure proper overflow handling */
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.EmojiPickerReact.epr-dark-theme {
+  background-color: theme('colors.gray.800');
+}
+.EmojiPickerReact.epr-dark-theme .epr-emoji-category-label{
+  background-color: theme('colors.gray.900');
+}

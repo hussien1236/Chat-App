@@ -1,0 +1,94 @@
+<?php
+
+namespace App\Models;
+
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
+
+class User extends Authenticatable
+{
+    use HasFactory, Notifiable;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'avatar',
+        'name',
+        'email',
+        'email_verified_at',
+        'password',
+        'is_admin'
+    ];
+
+    /**
+     * The attributes that should be hidden for serialization.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'group_users');
+    }
+    public static function getUsersExceptUser(User $exceptUser)
+    {
+        $user_id = $exceptUser->id;
+        $query = User::Select(['users.*', 'messages.message as last_message', 
+        'messages.created_at as last_message_date'])
+        ->where('users.id', '!=', $user_id )
+        ->when(!$exceptUser->is_admin, function ($query) {
+            $query->whereNull('users.blocked_at');
+        })
+        ->leftJoin('conversations',function ($join) use ($user_id) {
+            $join->on('conversations.user_id1', '=', 'users.id')
+                 ->where('conversations.user_id2', '=', $user_id)
+                    ->orWhere(function ($join) use ($user_id) {
+            $join->on('conversations.user_id2', '=', 'users.id')
+                    ->where('conversations.user_id1', '=', $user_id);
+        });
+       })
+       ->leftJoin('messages', 'messages.id', '=', 'conversations.last_message_id')
+       ->orderByRaw('IFNULL(users.blocked_at, 1)')
+       ->orderByDesc('messages.created_at')
+         ->orderByDesc('users.name');
+        return $query->get();   
+    }
+
+    public function toConversationArray()
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'avatar_url' => $this->avatar ? Storage::url($this->avatar) : null,
+            'is_group' => false,
+            'is_admin' => (bool) $this->is_admin,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            'blocked_at' => $this->blocked_at,
+            'last_message' => $this->last_message ?? '',
+            'last_message_date' => $this->last_message_date? $this->last_message_date . ' UTC': null,
+        ];
+    }    
+}
